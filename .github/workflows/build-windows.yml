@@ -3,6 +3,10 @@ name: Build Windows
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "landing/**"
+      - ".agents/**"
+      - "README.md"
   workflow_dispatch:
 
 permissions:
