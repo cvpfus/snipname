@@ -57,7 +57,7 @@
         <div class="nav-links">
           <a href="#how">How it works</a>
           <a href="#faq">FAQ</a>
-          <a class="nav-cta" id="nav-download" href="/download/snipname-windows.zip">Download</a>
+          <a class="nav-cta" id="nav-download" href="https://github.com/cvpfus/snipname/releases/download/v0.1.0/snipname_0.1.0_x64-setup.exe">Download</a>
         </div>
         <button class="menu" type="button" aria-expanded="false" aria-controls="sheet" aria-label="Open menu">
           <span></span>
@@ -69,7 +69,7 @@
     <div class="sheet" id="sheet" hidden>
       <a href="#how">How it works</a>
       <a href="#faq">FAQ</a>
-      <a href="/download/snipname-windows.zip">Download for Windows</a>
+      <a href="https://github.com/cvpfus/snipname/releases/download/v0.1.0/snipname_0.1.0_x64-setup.exe">Download for Windows</a>
       <a href="https://github.com/cvpfus/snipname" rel="noreferrer">Source on GitHub</a>
     </div>
 
@@ -88,7 +88,7 @@
             search, like <code>auth0-login-error.png</code>.
           </p>
           <div class="cta-row">
-            <a class="btn btn-primary" id="hero-download" href="/download/snipname-windows.zip">
+            <a class="btn btn-primary" id="hero-download" href="https://github.com/cvpfus/snipname/releases/download/v0.1.0/snipname_0.1.0_x64-setup.exe">
               Download for Windows
             </a>
             <a class="btn btn-ghost" href="https://github.com/cvpfus/snipname" rel="noreferrer">
@@ -229,15 +229,16 @@
             <p class="eyebrow">Windows x64 · version 0.1.0</p>
             <h2>Get the latest build</h2>
             <p>
-              The button downloads the newest successful GitHub Actions artifact,
-              <code>snipname-windows</code>. Inside the zip: the NSIS setup, the MSI,
-              and the raw <code>snipname.exe</code>.
+              The button downloads the NSIS installer from the
+              <a href="https://github.com/cvpfus/snipname/releases/tag/v0.1.0">v0.1.0 release</a>.
+              The same release also has the MSI and the full
+              <code>snipname-windows.zip</code>.
             </p>
-            <p class="meta" id="build-meta">Looking up the latest artifact…</p>
+            <p class="meta" id="build-meta">Windows x64 installer from the v0.1.0 release.</p>
           </div>
           <div class="download-actions">
-            <a class="btn btn-primary" id="download-btn" href="/download/snipname-windows.zip">
-              Download Windows zip
+            <a class="btn btn-primary" id="download-btn" href="https://github.com/cvpfus/snipname/releases/download/v0.1.0/snipname_0.1.0_x64-setup.exe">
+              Download for Windows
             </a>
             <a class="btn btn-ghost" id="run-link" href="https://github.com/cvpfus/snipname/actions/workflows/build-windows.yml">
               See the build
@@ -288,19 +289,20 @@
             </p>
           </details>
           <details class="reveal">
-            <summary>Why is the download a zip, not a single installer?</summary>
+            <summary>Where are the MSI and the raw exe?</summary>
             <p>
-              GitHub Actions stores the Windows bundle as one artifact. The zip holds
-              <code>snipname_0.1.0_x64-setup.exe</code> (NSIS), the MSI, and
+              The button is the NSIS setup. The
+              <a href="https://github.com/cvpfus/snipname/releases/tag/v0.1.0">v0.1.0 release</a>
+              also has the MSI and <code>snipname-windows.zip</code>, which includes
               <code>snipname.exe</code> if you want to run it without installing.
             </p>
           </details>
           <details class="reveal">
             <summary>Do I need a GitHub login to download?</summary>
             <p>
-              No. The download button fetches the newest successful Actions artifact
-              and sends the zip directly. GitHub login is only needed if you open the
-              build log instead.
+              The installer is a release asset on this private repository, so GitHub
+              asks you to sign in with an account that can read it. After that the
+              setup exe starts.
             </p>
           </details>
           <details class="reveal">
@@ -334,7 +336,7 @@
         <div class="reveal">
           <h2>Snip, paste, and keep going</h2>
           <p>The clipboard is ready on release. The searchable name shows up after.</p>
-          <a class="btn btn-primary" id="close-download" href="/download/snipname-windows.zip">Download for Windows</a>
+          <a class="btn btn-primary" id="close-download" href="https://github.com/cvpfus/snipname/releases/download/v0.1.0/snipname_0.1.0_x64-setup.exe">Download for Windows</a>
         </div>
       </section>
     </main>

@@ -92,6 +92,9 @@ const navDownload = document.querySelector("#nav-download");
 const closeDownload = document.querySelector("#close-download");
 const runLink = document.querySelector("#run-link");
 
+const RELEASE_SETUP =
+  "https://github.com/cvpfus/snipname/releases/download/v0.1.0/snipname_0.1.0_x64-setup.exe";
+
 function pointDownloads(href, label) {
   downloadBtn.href = href;
   downloadBtn.removeAttribute("aria-disabled");
@@ -106,11 +109,9 @@ latestArtifact()
     const when = formatWhen(latest.builtAt);
     meta.textContent = `Built ${when} · ${latest.sha} · ${formatSize(latest.size)} zip · NSIS setup inside`;
     proof.textContent = `Latest Windows build · ${when} · ${formatSize(latest.size)}`;
-    pointDownloads(latest.zipUrl, "Download Windows zip");
+    pointDownloads(RELEASE_SETUP, "Download for Windows");
     runLink.href = latest.runUrl;
   })
   .catch(() => {
-    meta.textContent =
-      "Could not read the build time from here. The button still downloads snipname-windows.zip.";
-    pointDownloads("/download/snipname-windows.zip", "Download Windows zip");
+    meta.textContent = "Windows x64 installer from the v0.1.0 release.";
   });
