@@ -1,5 +1,4 @@
 const REPO = "cvpfus/snipname";
-const WORKFLOW = "build-windows.yml";
 
 const menu = document.querySelector(".menu");
 const sheet = document.querySelector("#sheet");
@@ -111,8 +110,7 @@ latestArtifact()
     runLink.href = latest.runUrl;
   })
   .catch(() => {
-    const fallback = `https://github.com/${REPO}/actions/workflows/${WORKFLOW}`;
     meta.textContent =
-      "Could not read the latest artifact from here. Open the Windows build and download snipname-windows.";
-    pointDownloads(fallback, "Open Windows builds");
+      "Could not read the build time from here. The button still downloads snipname-windows.zip.";
+    pointDownloads("/download/snipname-windows.zip", "Download Windows zip");
   });
