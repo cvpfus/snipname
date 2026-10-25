@@ -27,9 +27,18 @@ const MODES: { id: SnipMode; label: string }[] = [
 ];
 type OllamaStatus = { ok: boolean; message: string; models: string[] };
 
+function retarget(selected: Set<string>, from: string, to: string) {
+  if (!selected.has(from) || from === to) return selected;
+  const next = new Set(selected);
+  next.delete(from);
+  next.add(to);
+  return next;
+}
+
 export default function App() {
   const [dir, setDir] = useState("");
   const [rows, setRows] = useState<Row[]>([]);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
   const [checking, setChecking] = useState(false);
   const [model, setModel] = useState("gemma3:4b");
@@ -72,6 +81,7 @@ export default function App() {
       ]);
     });
     const named = listen<ShotNamed>("shot-named", (event) => {
+      setSelected((current) => retarget(current, event.payload.from, event.payload.to));
       setRows((current) =>
         current.map((row) =>
           row.path === event.payload.from
@@ -172,6 +182,24 @@ export default function App() {
     setLog(null);
     const list = await invoke<Shot[]>("list_unnamed", { dir });
     setRows(list.map((s) => ({ ...s, status: "idle" })));
+    setSelected(new Set(list.map((shot) => shot.path)));
+  }
+
+  function toggle(path: string) {
+    setSelected((current) => {
+      const next = new Set(current);
+      if (next.has(path)) next.delete(path);
+      else next.add(path);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    setSelected((current) =>
+      rows.length > 0 && rows.every((row) => current.has(row.path))
+        ? new Set()
+        : new Set(rows.map((row) => row.path)),
+    );
   }
 
   async function run(dry: boolean) {
@@ -181,6 +209,7 @@ export default function App() {
       const next = [...rows];
       for (let i = 0; i < next.length; i++) {
         const row = next[i]!;
+        if (!selected.has(row.path)) continue;
         next[i] = { ...row, status: "reading", error: undefined };
         setRows([...next]);
         try {
@@ -201,6 +230,7 @@ export default function App() {
               from: row.path,
               toName: named.name,
             });
+            setSelected((current) => retarget(current, row.path, dest));
             next[i] = {
               ...next[i]!,
               status: "done",
@@ -218,6 +248,10 @@ export default function App() {
       setBusy(false);
     }
   }
+
+  const picked = rows.filter((row) => selected.has(row.path)).length;
+  const allSelected = rows.length > 0 && picked === rows.length;
+  const someSelected = picked > 0;
 
   return (
     <main className="wrap">
@@ -321,27 +355,52 @@ export default function App() {
           <button disabled={busy || !dir} onClick={() => void refresh()}>
             Scan
           </button>
-          <button disabled={busy || rows.length === 0} onClick={() => void run(true)}>
-            Dry run
+          <button disabled={busy || picked === 0} onClick={() => void run(true)}>
+            Dry run{picked > 0 ? ` ${picked}` : ""}
           </button>
           <button
             className="primary"
-            disabled={busy || rows.length === 0}
+            disabled={busy || picked === 0}
             onClick={() => void run(false)}
           >
-            Rename
+            Rename{picked > 0 ? ` ${picked}` : ""}
           </button>
         </div>
       </section>
 
       {log && <p className="err">{log}</p>}
 
+      {rows.length > 0 && (
+        <label className="select-all">
+          <input
+            type="checkbox"
+            checked={allSelected}
+            ref={(node) => {
+              if (node) node.indeterminate = someSelected && !allSelected;
+            }}
+            disabled={busy}
+            onChange={toggleAll}
+          />
+          {allSelected ? "Clear selection" : "Select all"}
+          <span>
+            {picked} of {rows.length}
+          </span>
+        </label>
+      )}
+
       <ul className="list">
         {rows.length === 0 && (
           <li className="empty">No snips yet. Press New, or Scan for older unnamed files.</li>
         )}
         {rows.map((r) => (
-          <li key={r.path}>
+          <li key={r.path} className={selected.has(r.path) ? "picked" : ""}>
+            <input
+              type="checkbox"
+              checked={selected.has(r.path)}
+              disabled={busy}
+              aria-label={`Select ${r.name}`}
+              onChange={() => toggle(r.path)}
+            />
             <div>
               <strong>{r.name}</strong>
               {r.proposed && (

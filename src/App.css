@@ -36,11 +36,20 @@ button {
 }
 button:disabled { opacity: 0.4; cursor: default; }
 button.primary { background: #f0b429; color: #111; border-color: #f0b429; font-weight: 600; }
-.list { list-style: none; padding: 0; margin: 1rem 0 0; display: grid; gap: 0.5rem; }
+.list { list-style: none; padding: 0; margin: 0.5rem 0 0; display: grid; gap: 0.5rem; }
 .list li {
-  display: flex; justify-content: space-between; gap: 1rem;
+  display: flex; align-items: start; justify-content: space-between; gap: 0.75rem;
   padding: 0.85rem 1rem; background: #171a21; border-radius: 10px; border: 1px solid #2a2f3a;
 }
+.list li > div { flex: 1; min-width: 0; }
+.list li input, .select-all input {
+  width: 1rem; height: 1rem; margin-top: 0.2rem; accent-color: #f0b429;
+}
+.select-all {
+  display: flex; align-items: center; gap: 0.5rem;
+  margin: 1rem 0 0; font-size: 0.85rem; color: #e8eaed;
+}
+.select-all span { margin-left: auto; color: #9aa0a6; }
 .empty { color: #9aa0a6; justify-content: center; }
 .arrow { margin-left: 0.5rem; color: #f0b429; }
 .reason { margin: 0.35rem 0 0; font-size: 0.85rem; color: #9aa0a6; }
