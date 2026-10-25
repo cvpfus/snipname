@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { nameScreenshot } from "./lib/ollama";
-import { slugify } from "./lib/slug";
+import { open } from "@tauri-apps/plugin-dialog";
 import "./App.css";
 
 type Shot = { path: string; name: string };
@@ -11,12 +10,15 @@ type Row = Shot & {
   reason?: string;
   error?: string;
 };
+type OllamaStatus = { ok: boolean; message: string; models: string[] };
 
 export default function App() {
   const [dir, setDir] = useState("");
   const [rows, setRows] = useState<Row[]>([]);
   const [busy, setBusy] = useState(false);
   const [model, setModel] = useState("gemma3:4b");
+  const [ollamaUrl, setOllamaUrl] = useState("http://127.0.0.1:11434");
+  const [status, setStatus] = useState<string | null>(null);
   const [log, setLog] = useState<string | null>(null);
 
   useEffect(() => {
@@ -24,6 +26,31 @@ export default function App() {
       .then(setDir)
       .catch((e) => setLog(String(e)));
   }, []);
+
+  async function pickFolder() {
+    const selected = await open({
+      directory: true,
+      multiple: false,
+      defaultPath: dir || undefined,
+      title: "Choose Screenshots folder",
+    });
+    if (typeof selected === "string") setDir(selected);
+  }
+
+  async function pingOllama() {
+    setLog(null);
+    try {
+      const s = await invoke<OllamaStatus>("check_ollama", { ollamaUrl });
+      setStatus(s.message);
+      if (s.models.length && !s.models.some((m) => m.startsWith(model.split(":")[0]!))) {
+        setStatus(`${s.message} · tip: pull your model with ollama pull ${model}`);
+      }
+      if (!s.ok) setLog(s.message);
+    } catch (e) {
+      setStatus(null);
+      setLog(String(e));
+    }
+  }
 
   async function refresh() {
     setLog(null);
@@ -41,21 +68,28 @@ export default function App() {
         next[i] = { ...row, status: "reading", error: undefined };
         setRows([...next]);
         try {
-          const b64 = await invoke<string>("read_image_b64", { path: row.path });
-          const named = await nameScreenshot(b64, { model });
-          const stem = slugify(named.name);
-          next[i] = { ...row, status: "named", proposed: stem, reason: named.reason };
+          const named = await invoke<{ name: string; reason: string }>("name_screenshot", {
+            path: row.path,
+            ollamaUrl,
+            model,
+          });
+          next[i] = {
+            ...row,
+            status: "named",
+            proposed: named.name,
+            reason: named.reason,
+          };
           setRows([...next]);
           if (!dry) {
             const dest = await invoke<string>("rename_shot", {
               from: row.path,
-              toName: stem,
+              toName: named.name,
             });
             next[i] = {
               ...next[i]!,
               status: "done",
               path: dest,
-              name: dest.split(/[/\\]/).pop() ?? stem,
+              name: dest.split(/[/\\]/).pop() ?? named.name,
             };
             setRows([...next]);
           }
@@ -73,19 +107,34 @@ export default function App() {
     <main className="wrap">
       <header>
         <h1>Snipname</h1>
-        <p>Rename “Cuplikan layar …” from what’s on the screen — Gemma runs locally via Ollama.</p>
+        <p>
+          Rename “Cuplikan layar …” from what’s on the screen — Gemma runs locally via Ollama
+          (called from the app, no CORS setup).
+        </p>
       </header>
 
       <section className="bar">
         <label>
           Screenshots folder
-          <input value={dir} onChange={(e) => setDir(e.target.value)} />
+          <div className="row">
+            <input value={dir} readOnly placeholder="Pick a folder…" />
+            <button type="button" onClick={() => void pickFolder()}>
+              Browse…
+            </button>
+          </div>
+        </label>
+        <label>
+          Ollama URL
+          <input value={ollamaUrl} onChange={(e) => setOllamaUrl(e.target.value)} />
         </label>
         <label>
           Model
           <input value={model} onChange={(e) => setModel(e.target.value)} />
         </label>
         <div className="actions">
+          <button disabled={busy} onClick={() => void pingOllama()}>
+            Check Ollama
+          </button>
           <button disabled={busy || !dir} onClick={() => void refresh()}>
             Scan
           </button>
@@ -100,6 +149,7 @@ export default function App() {
             Rename
           </button>
         </div>
+        {status && <p className="ok">{status}</p>}
       </section>
 
       {log && <p className="err">{log}</p>}
