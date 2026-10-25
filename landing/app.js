@@ -104,13 +104,14 @@ function pointDownloads(href, label) {
   closeDownload.href = href;
 }
 
+pointDownloads(RELEASE_SETUP, "Download for Windows");
+
 latestArtifact()
   .then((latest) => {
     const when = formatWhen(latest.builtAt);
-    meta.textContent = `Built ${when} · ${latest.sha} · ${formatSize(latest.size)} zip · NSIS setup inside`;
+    meta.textContent = `Built ${when} · ${latest.sha} · ${formatSize(latest.size)}`;
     proof.textContent = `Latest Windows build · ${when} · ${formatSize(latest.size)}`;
-    pointDownloads(RELEASE_SETUP, "Download for Windows");
-    runLink.href = latest.runUrl;
+    if (latest.runUrl) runLink.href = latest.runUrl;
   })
   .catch(() => {
     meta.textContent = "Windows x64 installer from the v0.1.0 release.";
