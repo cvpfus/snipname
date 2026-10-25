@@ -3,6 +3,7 @@ mod naming;
 mod ollama;
 mod screen;
 
+use base64::Engine as _;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
@@ -31,6 +32,22 @@ pub struct NameResult {
 }
 
 struct SettingsState(Mutex<OllamaSettings>);
+struct SnipModeState(Mutex<String>);
+
+fn preview_data_url(image: &image::RgbaImage) -> String {
+    let thumb = image::imageops::thumbnail(image, 640, 400);
+    let mut bytes = Vec::new();
+    if thumb
+        .write_to(
+            &mut std::io::Cursor::new(&mut bytes),
+            image::ImageFormat::Png,
+        )
+        .is_err()
+    {
+        return String::new();
+    }
+    format!("data:image/png;base64,{}", base64::engine::general_purpose::STANDARD.encode(bytes))
+}
 
 fn is_unnamed(name: &str) -> bool {
     UNNAMED.iter().any(|p| name.starts_with(p))
@@ -175,6 +192,7 @@ struct ShotSaved {
     path: String,
     name: String,
     copied: bool,
+    preview: String,
 }
 
 #[tauri::command]
@@ -197,6 +215,7 @@ async fn capture_selection(
     let dir = shots_dir()?;
     let file_name = provisional_name(std::time::SystemTime::now(), offset_minutes);
     let saved = screen::write_png(&dir, &file_name, &image)?;
+    let preview = preview_data_url(&image);
     let shot = ShotSaved {
         path: saved.to_string_lossy().into_owned(),
         name: saved
@@ -205,6 +224,7 @@ async fn capture_selection(
             .unwrap_or(&file_name)
             .to_string(),
         copied,
+        preview,
     };
     let settings = state.0.lock().expect("settings").clone();
     naming::enqueue(&app, &shot.path, settings);
@@ -213,12 +233,33 @@ async fn capture_selection(
 }
 
 #[tauri::command]
-async fn open_overlay(app: AppHandle, window: tauri::Window, mode: String) -> Result<(), String> {
-    let _ = window.hide();
+fn current_snip_mode(state: State<SnipModeState>) -> String {
+    state.0.lock().expect("snip mode").clone()
+}
+
+#[tauri::command]
+fn report_snip_error(app: AppHandle, error: String) {
+    let _ = app.emit(
+        "shot-name-failed",
+        serde_json::json!({ "path": "", "error": error }),
+    );
+}
+
+#[tauri::command]
+fn show_main(app: AppHandle) {
+    if let Some(main) = app.get_webview_window("main") {
+        let _ = main.show();
+        let _ = main.set_focus();
+    }
+}
+
+#[tauri::command]
+async fn open_overlay(app: AppHandle, state: State<'_, SnipModeState>, mode: String) -> Result<(), String> {
+    *state.0.lock().expect("snip mode") = mode.clone();
     if let Some(existing) = app.get_webview_window("overlay") {
+        let _ = existing.emit("overlay-mode", mode.clone());
         let _ = existing.show();
         let _ = existing.set_focus();
-        let _ = existing.emit("overlay-mode", mode);
         return Ok(());
     }
     let url = app
@@ -226,10 +267,10 @@ async fn open_overlay(app: AppHandle, window: tauri::Window, mode: String) -> Re
         .and_then(|window| window.url().ok())
         .map(|url| {
             let mut overlay = url;
-            overlay.set_query(Some("overlay=1"));
+            overlay.set_query(Some(&format!("overlay=1&mode={mode}")));
             WebviewUrl::External(overlay)
         })
-        .unwrap_or_else(|| WebviewUrl::App("index.html?overlay=1".into()));
+        .unwrap_or_else(|| WebviewUrl::App(format!("index.html?overlay=1&mode={mode}").into()));
     let overlay = tauri::WebviewWindowBuilder::new(&app, "overlay", url)
         .title("Snipname capture")
         .decorations(false)
@@ -244,6 +285,9 @@ async fn open_overlay(app: AppHandle, window: tauri::Window, mode: String) -> Re
         .build()
         .map_err(|e| e.to_string())?;
     let _ = overlay.emit("overlay-mode", mode);
+    if let Some(main) = app.get_webview_window("main") {
+        let _ = main.hide();
+    }
     Ok(())
 }
 
@@ -257,6 +301,7 @@ pub fn run() {
             url: "http://127.0.0.1:11434".into(),
             model: "gemma3:4b".into(),
         })))
+        .manage(SnipModeState(Mutex::new("rectangle".into())))
         .setup(|app| {
             app.manage(NamingQueue::start(app.handle().clone()));
             Ok(())
@@ -271,6 +316,9 @@ pub fn run() {
             list_windows,
             capture_selection,
             open_overlay,
+            show_main,
+            current_snip_mode,
+            report_snip_error,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

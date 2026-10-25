@@ -43,6 +43,9 @@ const MODE_LABEL: Record<SnipMode, string> = {
 
 export function Overlay({ initialMode, scale, origin: monitorOrigin, onDone }: Props) {
   const [mode, setMode] = useState<SnipMode>(initialMode);
+  useEffect(() => {
+    setMode(initialMode);
+  }, [initialMode]);
   const [windows, setWindows] = useState<WindowHit[]>([]);
   const [hover, setHover] = useState<WindowHit | null>(null);
   const [drag, setDrag] = useState<Drag | null>(null);
@@ -129,8 +132,8 @@ export function Overlay({ initialMode, scale, origin: monitorOrigin, onDone }: P
         selection: toPhysical(selection, scale, monitorOrigin),
         offsetMinutes: -new Date().getTimezoneOffset(),
       });
-    } catch {
-      // The overlay must close either way. A failed save is reported from the main window.
+    } catch (error) {
+      await invoke("report_snip_error", { error: String(error) }).catch(() => undefined);
     } finally {
       onDone();
     }

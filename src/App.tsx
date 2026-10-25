@@ -13,8 +13,9 @@ type Row = Shot & {
   reason?: string;
   error?: string;
   copied?: boolean;
+  preview?: string;
 };
-type ShotSaved = { path: string; name: string; copied: boolean };
+type ShotSaved = { path: string; name: string; copied: boolean; preview: string };
 type ShotNamed = { from: string; to: string; name: string; reason: string };
 type ShotFailed = { path: string; error: string };
 
@@ -46,6 +47,7 @@ export default function App() {
   const [ollamaUrl, setOllamaUrl] = useState("http://127.0.0.1:11434");
   const [status, setStatus] = useState<string | null>(null);
   const [log, setLog] = useState<string | null>(null);
+  const [preview, setPreview] = useState<ShotSaved | null>(null);
   const [mode, setMode] = useState<SnipMode>("rectangle");
   const [delay, setDelay] = useState(0);
   const [counting, setCounting] = useState<number | null>(null);
@@ -70,12 +72,14 @@ export default function App() {
 
   useEffect(() => {
     const saved = listen<ShotSaved>("shot-saved", (event) => {
+      setPreview(event.payload);
       setRows((current) => [
         {
           path: event.payload.path,
           name: event.payload.name,
           status: "reading",
           copied: event.payload.copied,
+          preview: event.payload.preview,
         },
         ...current.filter((row) => row.path !== event.payload.path),
       ]);
@@ -98,6 +102,7 @@ export default function App() {
       );
     });
     const failed = listen<ShotFailed>("shot-name-failed", (event) => {
+      if (!event.payload.path) setLog(event.payload.error);
       setRows((current) =>
         current.map((row) =>
           row.path === event.payload.path
@@ -368,6 +373,19 @@ export default function App() {
         </div>
       </section>
 
+      {preview && (
+        <section className="shot-preview" aria-label="Last snip">
+          <img src={preview.preview} alt="" />
+          <div>
+            <strong>{preview.name}</strong>
+            <p>{preview.copied ? "Copied to clipboard." : "Saved."} Naming in the background.</p>
+            <button type="button" onClick={() => setPreview(null)}>
+              Close
+            </button>
+          </div>
+        </section>
+      )}
+
       {log && <p className="err">{log}</p>}
 
       {rows.length > 0 && (
@@ -402,6 +420,9 @@ export default function App() {
               onChange={() => toggle(r.path)}
             />
             <div>
+              {r.preview && (
+                <img className="preview" src={r.preview} alt="" />
+              )}
               <strong>{r.name}</strong>
               {r.proposed && (
                 <span className="arrow">

@@ -73,7 +73,13 @@ fn emit_failure(app: &AppHandle, path: String, error: String) {
 }
 
 pub fn enqueue(app: &AppHandle, path: impl AsRef<Path>, settings: OllamaSettings) {
-    if let Some(queue) = app.try_state::<NamingQueue>() {
-        queue.enqueue(path.as_ref().to_string_lossy().into_owned(), settings);
-    }
+    let Some(queue) = app.try_state::<NamingQueue>() else {
+        emit_failure(
+            app,
+            path.as_ref().to_string_lossy().into_owned(),
+            "rename queue was not running".into(),
+        );
+        return;
+    };
+    queue.enqueue(path.as_ref().to_string_lossy().into_owned(), settings);
 }
