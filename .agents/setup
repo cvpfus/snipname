@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+# Install Snipname's toolchain for a fresh Amp orb.
+# Idempotent: a warm run should only confirm what is already installed.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+step() {
+  local label=$1
+  shift
+  local start=$SECONDS
+  echo "==> ${label}"
+  "$@"
+  echo "==> ${label} done in $((SECONDS - start))s"
+}
+
+need_apt=0
+for pkg in \
+  build-essential \
+  curl \
+  file \
+  libayatana-appindicator3-dev \
+  librsvg2-dev \
+  libssl-dev \
+  libwebkit2gtk-4.1-dev \
+  libxdo-dev \
+  pkg-config \
+  wget
+do
+  if ! dpkg -s "$pkg" >/dev/null 2>&1; then
+    need_apt=1
+    break
+  fi
+done
+
+if [[ "$need_apt" -eq 1 ]]; then
+  step "apt packages" bash -c '
+    sudo apt-get update
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+      build-essential \
+      curl \
+      file \
+      libayatana-appindicator3-dev \
+      librsvg2-dev \
+      libssl-dev \
+      libwebkit2gtk-4.1-dev \
+      libxdo-dev \
+      pkg-config \
+      wget
+  '
+else
+  echo "==> apt packages already installed"
+fi
+
+# rustup lives in ~/.cargo/bin, which is not on PATH until its env file is sourced.
+if [[ ! -x "$HOME/.cargo/bin/rustup" ]]; then
+  step "rustup" bash -c '
+    curl --proto "=https" --tlsv1.2 -fsSL https://sh.rustup.rs \
+      | sh -s -- -y --default-toolchain stable --profile minimal
+  '
+else
+  echo "==> rustup already installed"
+fi
+
+# The installer cannot update this running script's environment.
+# shellcheck disable=SC1091
+source "$HOME/.cargo/env"
+
+if ! rustup show active-toolchain >/dev/null 2>&1; then
+  step "rust stable" rustup toolchain install stable --profile minimal
+else
+  echo "==> rust toolchain $(rustup show active-toolchain)"
+fi
+
+# CI installs pnpm 9. The image may already have a newer pnpm earlier on PATH,
+# so invoke pnpm 9 through corepack instead of trusting `pnpm`.
+if ! corepack pnpm -v | grep -q '^9\.'; then
+  step "pnpm 9" corepack prepare pnpm@9 --activate
+fi
+
+step "frontend deps" corepack pnpm install --frozen-lockfile
+
+echo "==> setup complete"

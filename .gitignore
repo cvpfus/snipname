@@ -25,3 +25,9 @@ dist-ssr
 
 # Rust / Tauri
 src-tauri/target
+
+# Staged Windows installers for the local landing download server
+landing/files/
+
+# Orb portal manifests
+.amp/portals/

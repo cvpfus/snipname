@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Fast checks after an orb wakes. Do not install dependencies here.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+if [[ -f "$HOME/.cargo/env" ]]; then
+  # shellcheck disable=SC1091
+  source "$HOME/.cargo/env"
+else
+  echo "missing cargo env; rerun .agents/setup" >&2
+  exit 1
+fi
+
+missing=0
+for cmd in node corepack rustc cargo; do
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    echo "missing ${cmd}; rerun .agents/setup" >&2
+    missing=1
+  fi
+done
+
+if ! corepack pnpm -v 2>/dev/null | grep -q '^9\.'; then
+  echo "pnpm 9 is not active; rerun .agents/setup" >&2
+  missing=1
+fi
+
+if [[ ! -d node_modules ]]; then
+  echo "missing node_modules; rerun .agents/setup" >&2
+  missing=1
+fi
+
+if [[ "$missing" -ne 0 ]]; then
+  exit 1
+fi
+
+echo "resume ok: node $(node -v), pnpm $(corepack pnpm -v), rustc $(rustc --version)"
