@@ -26,9 +26,9 @@ pnpm tauri dev
 ```
 
 1. Point the folder at `%USERPROFILE%\Pictures\Screenshots` (default on Windows).
-2. **Scan** unnamed files (`Cuplikan layar…`, `Screenshot…`).
-3. **Dry run** to preview names from Gemma.
-4. **Rename** when it looks right.
+2. **New** opens the same overlay as Snipping Tool: rectangle, window, full screen, or freeform. `Print Screen` does the same when it is free. Delay is 3, 5, or 10 seconds.
+3. Release the drag. The snip is copied and saved immediately as `Cuplikan layar YYYY-MM-DD HHMMSS.png`, so you can snip again without waiting.
+4. Gemma renames that file in the background. **Scan / Dry run / Rename** still works for older unnamed files.
 
 ## Landing / .tech
 

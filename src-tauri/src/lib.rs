@@ -1,14 +1,20 @@
-use base64::{engine::general_purpose::STANDARD, Engine as _};
-use serde::{Deserialize, Serialize};
-use serde_json::json;
-use std::fs;
+mod capture;
+mod naming;
+mod ollama;
+mod screen;
+
 use std::path::{Path, PathBuf};
+use std::sync::Mutex;
+
+use serde::{Deserialize, Serialize};
+use tauri::{AppHandle, Emitter, Manager, State, WebviewUrl};
+
+use capture::provisional_name;
+use naming::NamingQueue;
+use ollama::{OllamaSettings, OllamaStatus};
+use screen::Selection;
 
 const UNNAMED: &[&str] = &["Cuplikan layar", "Screenshot", "Screen Shot"];
-
-const NAME_SYSTEM: &str = r#"You name Windows screenshots so people can find them later.
-Reply with JSON only: {"name":"kebab-case-filename-stem","reason":"one short sentence"}.
-Rules for name: English kebab-case, 3–8 words, no dates, no extension, describe the UI or content (app, error, dialog)."#;
 
 #[derive(Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -17,20 +23,14 @@ pub struct Shot {
     pub name: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct NameResult {
     pub name: String,
     pub reason: String,
 }
 
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct OllamaStatus {
-    pub ok: bool,
-    pub message: String,
-    pub models: Vec<String>,
-}
+struct SettingsState(Mutex<OllamaSettings>);
 
 fn is_unnamed(name: &str) -> bool {
     UNNAMED.iter().any(|p| name.starts_with(p))
@@ -43,7 +43,7 @@ fn shots_dir() -> Result<PathBuf, String> {
     Ok(PathBuf::from(home).join("Pictures").join("Screenshots"))
 }
 
-fn slugify(caption: &str) -> String {
+pub fn slugify(caption: &str) -> String {
     let lower = caption.to_lowercase();
     let mut out = String::new();
     let mut dash = false;
@@ -73,7 +73,7 @@ fn default_screenshots_dir() -> Result<String, String> {
 
 #[tauri::command]
 fn list_unnamed(dir: String) -> Result<Vec<Shot>, String> {
-    let entries = fs::read_dir(&dir).map_err(|e| format!("read_dir {dir}: {e}"))?;
+    let entries = std::fs::read_dir(&dir).map_err(|e| format!("read_dir {dir}: {e}"))?;
     let mut out = Vec::new();
     for entry in entries {
         let entry = entry.map_err(|e| e.to_string())?;
@@ -103,8 +103,7 @@ fn list_unnamed(dir: String) -> Result<Vec<Shot>, String> {
     Ok(out)
 }
 
-#[tauri::command]
-fn rename_shot(from: String, to_name: String) -> Result<String, String> {
+pub fn rename_shot(from: String, to_name: String) -> Result<String, String> {
     let from_path = Path::new(&from);
     let parent = from_path
         .parent()
@@ -120,46 +119,18 @@ fn rename_shot(from: String, to_name: String) -> Result<String, String> {
         dest = parent.join(format!("{stem}-{n}.{ext}"));
         n += 1;
     }
-    fs::rename(&from, &dest).map_err(|e| format!("rename: {e}"))?;
+    std::fs::rename(&from, &dest).map_err(|e| format!("rename: {e}"))?;
     Ok(dest.to_string_lossy().into_owned())
 }
 
 #[tauri::command]
+fn rename_shot_command(from: String, to_name: String) -> Result<String, String> {
+    rename_shot(from, to_name)
+}
+
+#[tauri::command]
 async fn check_ollama(ollama_url: String) -> Result<OllamaStatus, String> {
-    let base = ollama_url.trim_end_matches('/');
-    let client = reqwest::Client::new();
-    let res = client
-        .get(format!("{base}/api/tags"))
-        .send()
-        .await
-        .map_err(|e| {
-            format!(
-                "Cannot reach Ollama at {base}. Is the app running? ({e})"
-            )
-        })?;
-    if !res.status().is_success() {
-        return Ok(OllamaStatus {
-            ok: false,
-            message: format!("Ollama returned HTTP {}", res.status()),
-            models: vec![],
-        });
-    }
-    let body: serde_json::Value = res.json().await.map_err(|e| e.to_string())?;
-    let models = body["models"]
-        .as_array()
-        .unwrap_or(&vec![])
-        .iter()
-        .filter_map(|m| m["name"].as_str().map(|s| s.to_string()))
-        .collect::<Vec<_>>();
-    Ok(OllamaStatus {
-        ok: true,
-        message: if models.is_empty() {
-            "Ollama is up, but no models are pulled yet. Run: ollama pull gemma3:4b".into()
-        } else {
-            format!("Ollama ok · {} model(s)", models.len())
-        },
-        models,
-    })
+    ollama::check(&ollama_url).await
 }
 
 #[tauri::command]
@@ -168,53 +139,112 @@ async fn name_screenshot(
     ollama_url: String,
     model: String,
 ) -> Result<NameResult, String> {
-    let bytes = fs::read(&path).map_err(|e| format!("read {path}: {e}"))?;
-    let image_b64 = STANDARD.encode(bytes);
-    let base = ollama_url.trim_end_matches('/');
-    let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(180))
+    ollama::name_image(
+        &path,
+        &OllamaSettings {
+            url: ollama_url,
+            model,
+        },
+    )
+    .await
+}
+
+#[tauri::command]
+fn remember_settings(state: State<SettingsState>, ollama_url: String, model: String) {
+    *state.0.lock().expect("settings") = OllamaSettings {
+        url: ollama_url,
+        model,
+    };
+}
+
+#[tauri::command]
+fn list_windows() -> Vec<capture::WindowBounds> {
+    screen::list_other_windows()
+        .into_iter()
+        .filter(|window| !is_own_overlay(window))
+        .collect()
+}
+
+fn is_own_overlay(window: &capture::WindowBounds) -> bool {
+    window.title == "Snipname capture" || window.title == "Snipname"
+}
+
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+struct ShotSaved {
+    path: String,
+    name: String,
+    copied: bool,
+}
+
+#[tauri::command]
+async fn capture_selection(
+    app: AppHandle,
+    window: tauri::Window,
+    state: State<'_, SettingsState>,
+    selection: Selection,
+    offset_minutes: i32,
+) -> Result<ShotSaved, String> {
+    // Hide before capture so the dim and toolbar are not in the snip.
+    let _ = window.hide();
+    // The compositor needs a frame after hide, or the dim is in the snip.
+    std::thread::sleep(std::time::Duration::from_millis(120));
+    let image = tauri::async_runtime::spawn_blocking(move || screen::capture_selection(&selection))
+        .await
+        .map_err(|e| e.to_string())?
+        .map_err(|e| e.to_string())?;
+    let copied = screen::copy_image(&image).is_ok();
+    let dir = shots_dir()?;
+    let file_name = provisional_name(std::time::SystemTime::now(), offset_minutes);
+    let saved = screen::write_png(&dir, &file_name, &image)?;
+    let shot = ShotSaved {
+        path: saved.to_string_lossy().into_owned(),
+        name: saved
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or(&file_name)
+            .to_string(),
+        copied,
+    };
+    let settings = state.0.lock().expect("settings").clone();
+    naming::enqueue(&app, &shot.path, settings);
+    let _ = app.emit("shot-saved", shot.clone());
+    Ok(shot)
+}
+
+#[tauri::command]
+async fn open_overlay(app: AppHandle, window: tauri::Window, mode: String) -> Result<(), String> {
+    let _ = window.hide();
+    if let Some(existing) = app.get_webview_window("overlay") {
+        let _ = existing.show();
+        let _ = existing.set_focus();
+        let _ = existing.emit("overlay-mode", mode);
+        return Ok(());
+    }
+    let url = app
+        .get_webview_window("main")
+        .and_then(|window| window.url().ok())
+        .map(|url| {
+            let mut overlay = url;
+            overlay.set_query(Some("overlay=1"));
+            WebviewUrl::External(overlay)
+        })
+        .unwrap_or_else(|| WebviewUrl::App("index.html?overlay=1".into()));
+    let overlay = tauri::WebviewWindowBuilder::new(&app, "overlay", url)
+        .title("Snipname capture")
+        .decorations(false)
+        .transparent(true)
+        .always_on_top(true)
+        .skip_taskbar(true)
+        .shadow(false)
+        .resizable(false)
+        .focused(true)
+        .visible(true)
+        .inner_size(800.0, 600.0)
         .build()
         .map_err(|e| e.to_string())?;
-    let res = client
-        .post(format!("{base}/api/chat"))
-        .json(&json!({
-            "model": model,
-            "stream": false,
-            "format": "json",
-            "options": { "temperature": 0, "seed": 7 },
-            "messages": [
-                { "role": "system", "content": NAME_SYSTEM },
-                {
-                    "role": "user",
-                    "content": "Name this screenshot.",
-                    "images": [image_b64]
-                }
-            ]
-        }))
-        .send()
-        .await
-        .map_err(|e| {
-            format!(
-                "Cannot reach Ollama at {base}. Start Ollama, then try again. ({e})"
-            )
-        })?;
-    if !res.status().is_success() {
-        let status = res.status();
-        let text = res.text().await.unwrap_or_default();
-        return Err(format!("Ollama {status}: {text}"));
-    }
-    let data: serde_json::Value = res.json().await.map_err(|e| e.to_string())?;
-    let raw = data["message"]["content"].as_str().unwrap_or("{}");
-    let parsed: serde_json::Value =
-        serde_json::from_str(raw).map_err(|e| format!("bad model JSON: {e} · raw={raw}"))?;
-    let name = parsed["name"]
-        .as_str()
-        .ok_or_else(|| format!("model returned no name: {raw}"))?;
-    let reason = parsed["reason"].as_str().unwrap_or("").to_string();
-    Ok(NameResult {
-        name: slugify(name),
-        reason,
-    })
+    let _ = overlay.emit("overlay-mode", mode);
+    Ok(())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -222,12 +252,25 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .manage(SettingsState(Mutex::new(OllamaSettings {
+            url: "http://127.0.0.1:11434".into(),
+            model: "gemma3:4b".into(),
+        })))
+        .setup(|app| {
+            app.manage(NamingQueue::start(app.handle().clone()));
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             default_screenshots_dir,
             list_unnamed,
-            rename_shot,
+            rename_shot_command,
             check_ollama,
-            name_screenshot
+            name_screenshot,
+            remember_settings,
+            list_windows,
+            capture_selection,
+            open_overlay,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

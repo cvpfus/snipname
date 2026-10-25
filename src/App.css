@@ -57,3 +57,18 @@ select {
   color: inherit;
 }
 .models { color: #9aa0a6; }
+.snip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: #171a21;
+  border: 1px solid #2a2f3a;
+  border-radius: 12px;
+}
+.modes { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+.modes button.on { outline: 1px solid #f0b429; }
+.snip .hint { flex-basis: 100%; margin: 0; color: #9aa0a6; font-size: 0.85rem; }
+button.new { min-width: 7rem; }

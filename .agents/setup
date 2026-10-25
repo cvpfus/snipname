@@ -23,7 +23,14 @@ for pkg in \
   librsvg2-dev \
   libssl-dev \
   libwebkit2gtk-4.1-dev \
+  libclang-dev \
+  libdbus-1-dev \
+  libegl-dev \
+  libpipewire-0.3-dev \
+  libwayland-dev \
+  libxcb1-dev \
   libxdo-dev \
+  libxrandr-dev \
   pkg-config \
   wget
 do
@@ -44,7 +51,14 @@ if [[ "$need_apt" -eq 1 ]]; then
       librsvg2-dev \
       libssl-dev \
       libwebkit2gtk-4.1-dev \
+      libclang-dev \
+      libdbus-1-dev \
+      libegl-dev \
+      libpipewire-0.3-dev \
+      libwayland-dev \
+      libxcb1-dev \
       libxdo-dev \
+      libxrandr-dev \
       pkg-config \
       wget
   '

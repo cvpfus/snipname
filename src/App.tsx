@@ -1,7 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
+import { register, unregister } from "@tauri-apps/plugin-global-shortcut";
 import { open } from "@tauri-apps/plugin-dialog";
 import "./App.css";
+import type { SnipMode } from "./snipping";
 
 type Shot = { path: string; name: string };
 type Row = Shot & {
@@ -9,7 +12,19 @@ type Row = Shot & {
   proposed?: string;
   reason?: string;
   error?: string;
+  copied?: boolean;
 };
+type ShotSaved = { path: string; name: string; copied: boolean };
+type ShotNamed = { from: string; to: string; name: string; reason: string };
+type ShotFailed = { path: string; error: string };
+
+const SNIP_SHORTCUT = "PrintScreen";
+const MODES: { id: SnipMode; label: string }[] = [
+  { id: "rectangle", label: "Rectangle" },
+  { id: "window", label: "Window" },
+  { id: "fullscreen", label: "Full screen" },
+  { id: "freeform", label: "Freeform" },
+];
 type OllamaStatus = { ok: boolean; message: string; models: string[] };
 
 export default function App() {
@@ -22,6 +37,12 @@ export default function App() {
   const [ollamaUrl, setOllamaUrl] = useState("http://127.0.0.1:11434");
   const [status, setStatus] = useState<string | null>(null);
   const [log, setLog] = useState<string | null>(null);
+  const [mode, setMode] = useState<SnipMode>("rectangle");
+  const [delay, setDelay] = useState(0);
+  const [counting, setCounting] = useState<number | null>(null);
+  const [shortcutOn, setShortcutOn] = useState(false);
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
 
   useEffect(() => {
     invoke<string>("default_screenshots_dir")
@@ -33,6 +54,87 @@ export default function App() {
     void pingOllama();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ollamaUrl]);
+
+  useEffect(() => {
+    void invoke("remember_settings", { ollamaUrl, model });
+  }, [ollamaUrl, model]);
+
+  useEffect(() => {
+    const saved = listen<ShotSaved>("shot-saved", (event) => {
+      setRows((current) => [
+        {
+          path: event.payload.path,
+          name: event.payload.name,
+          status: "reading",
+          copied: event.payload.copied,
+        },
+        ...current.filter((row) => row.path !== event.payload.path),
+      ]);
+    });
+    const named = listen<ShotNamed>("shot-named", (event) => {
+      setRows((current) =>
+        current.map((row) =>
+          row.path === event.payload.from
+            ? {
+                ...row,
+                path: event.payload.to,
+                name: event.payload.to.split(/[/\\]/).pop() ?? event.payload.name,
+                proposed: event.payload.name,
+                reason: event.payload.reason,
+                status: "done",
+              }
+            : row,
+        ),
+      );
+    });
+    const failed = listen<ShotFailed>("shot-name-failed", (event) => {
+      setRows((current) =>
+        current.map((row) =>
+          row.path === event.payload.path
+            ? { ...row, status: "error", error: event.payload.error }
+            : row,
+        ),
+      );
+    });
+    return () => {
+      void saved.then((stop) => stop());
+      void named.then((stop) => stop());
+      void failed.then((stop) => stop());
+    };
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    register(SNIP_SHORTCUT, (event) => {
+      if (event.state === "Pressed") void startSnip(modeRef.current);
+    })
+      .then(() => {
+        if (alive) setShortcutOn(true);
+      })
+      .catch(() => {
+        if (alive) setShortcutOn(false);
+      });
+    return () => {
+      alive = false;
+      void unregister(SNIP_SHORTCUT).catch(() => undefined);
+    };
+  }, []);
+
+  async function startSnip(nextMode: SnipMode) {
+    if (counting !== null) return;
+    if (delay > 0) {
+      for (let left = delay; left > 0; left -= 1) {
+        setCounting(left);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+      setCounting(null);
+    }
+    try {
+      await invoke("open_overlay", { mode: nextMode });
+    } catch (error) {
+      setLog(String(error));
+    }
+  }
 
   async function pickFolder() {
     const selected = await open({
@@ -95,7 +197,7 @@ export default function App() {
           };
           setRows([...next]);
           if (!dry) {
-            const dest = await invoke<string>("rename_shot", {
+            const dest = await invoke<string>("rename_shot_command", {
               from: row.path,
               toName: named.name,
             });
@@ -122,10 +224,53 @@ export default function App() {
       <header>
         <h1>Snipname</h1>
         <p>
-          Rename “Cuplikan layar …” from what’s on the screen — Gemma runs locally via Ollama
-          (called from the app, no CORS setup).
+          Snip like Windows, then let local Gemma name the file. The save finishes before the
+          rename, so the next snip never waits.
         </p>
       </header>
+
+      <section className="snip">
+        <div className="modes" role="radiogroup" aria-label="Snipping mode">
+          {MODES.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              role="radio"
+              aria-checked={mode === item.id}
+              className={mode === item.id ? "on" : ""}
+              onClick={() => setMode(item.id)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+        <label>
+          Delay
+          <select
+            value={delay}
+            onChange={(event) => setDelay(Number(event.target.value))}
+            aria-label="Delay"
+          >
+            <option value={0}>No delay</option>
+            <option value={3}>3 seconds</option>
+            <option value={5}>5 seconds</option>
+            <option value={10}>10 seconds</option>
+          </select>
+        </label>
+        <button
+          className="primary new"
+          type="button"
+          disabled={counting !== null}
+          onClick={() => void startSnip(mode)}
+        >
+          {counting !== null ? `Snipping in ${counting}…` : "New"}
+        </button>
+        <p className="hint">
+          {shortcutOn
+            ? "Print Screen opens the overlay. The snip is copied and saved immediately; Gemma renames it after."
+            : "Print Screen is already taken. Use New — the snip still saves immediately, and Gemma renames it after."}
+        </p>
+      </section>
 
       <section className="bar">
         <label>
@@ -192,7 +337,9 @@ export default function App() {
       {log && <p className="err">{log}</p>}
 
       <ul className="list">
-        {rows.length === 0 && <li className="empty">No unnamed screenshots yet. Hit Scan.</li>}
+        {rows.length === 0 && (
+          <li className="empty">No snips yet. Press New, or Scan for older unnamed files.</li>
+        )}
         {rows.map((r) => (
           <li key={r.path}>
             <div>
@@ -202,6 +349,9 @@ export default function App() {
                   → {r.proposed}
                   {r.status === "done" ? " ✓" : ""}
                 </span>
+              )}
+              {r.copied && r.status === "reading" && (
+                <p className="reason">Copied. Naming in the background…</p>
               )}
               {r.reason && <p className="reason">{r.reason}</p>}
               {r.error && <p className="err">{r.error}</p>}
