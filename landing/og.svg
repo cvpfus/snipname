@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#000000"/>
+  <circle cx="96" cy="96" r="28" fill="#f0b429"/>
+  <circle cx="96" cy="168" r="28" fill="#2ec4d6"/>
+  <text x="80" y="300" fill="#9b9b9b" font-family="Manrope, sans-serif" font-size="28" font-weight="600">Snipname</text>
+  <text x="80" y="390" fill="#ffffff" font-family="Manrope, sans-serif" font-size="64" font-weight="700">Find the screenshot</text>
+  <text x="80" y="468" fill="#9b9b9b" font-family="Manrope, sans-serif" font-size="64" font-weight="700">by what is on it</text>
+  <text x="80" y="540" fill="#f0b429" font-family="Manrope, sans-serif" font-size="24">Screenshot → auth0-login-error.png</text>
+</svg>

@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Snipname — name Windows screenshots with local Gemma</title>
+    <meta
+      name="description"
+      content="Snipname watches your Screenshots folder and renames default Snipping Tool files into searchable slugs with Gemma 3, running locally through Ollama. Nothing leaves the laptop."
+    />
+    <meta name="robots" content="index,follow" />
+    <link rel="canonical" href="https://cvpfus.github.io/snipname/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Snipname — name Windows screenshots with local Gemma" />
+    <meta
+      property="og:description"
+      content="Turn Screenshot 2026-10-09 153059.png into auth0-login-error.png. Gemma runs on your machine."
+    />
+    <meta property="og:url" content="https://cvpfus.github.io/snipname/" />
+    <meta property="og:image" content="https://cvpfus.github.io/snipname/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Snipname — name Windows screenshots with local Gemma" />
+    <meta
+      name="twitter:description"
+      content="Turn Screenshot 2026-10-09 153059.png into auth0-login-error.png. Gemma runs on your machine."
+    />
+    <meta name="twitter:image" content="https://cvpfus.github.io/snipname/og.png" />
+    <link rel="icon" href="./icon-128.png" type="image/png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Snipname",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Windows",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "description": "Renames Windows screenshots from what is on the image, using a local Gemma model through Ollama."
+      }
+    </script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="nav-wrap">
+      <nav class="nav" aria-label="Primary">
+        <a class="brand" href="./" aria-current="page">
+          <img src="./icon-128.png" width="28" height="28" alt="" />
+          <span>Snipname</span>
+        </a>
+        <div class="nav-links">
+          <a href="#how">How it works</a>
+          <a href="#faq">FAQ</a>
+          <a class="nav-cta" id="nav-download" href="#download">Download</a>
+        </div>
+        <button class="menu" type="button" aria-expanded="false" aria-controls="sheet" aria-label="Open menu">
+          <span></span>
+          <span></span>
+        </button>
+      </nav>
+    </header>
+
+    <div class="sheet" id="sheet" hidden>
+      <a href="#how">How it works</a>
+      <a href="#faq">FAQ</a>
+      <a href="#download">Download for Windows</a>
+      <a href="https://github.com/cvpfus/snipname" rel="noreferrer">Source on GitHub</a>
+    </div>
+
+    <main id="main">
+      <section class="hero">
+        <div class="hero-copy reveal">
+          <p class="eyebrow">Windows desktop · Gemma 3 via Ollama</p>
+          <h1>
+            Find the screenshot<br />
+            by what is on it
+          </h1>
+          <p class="lede">
+            Snipping Tool saves files like <code>Screenshot 2026-10-09 153059.png</code>.
+            Snipname asks a local Gemma model what is on the image, then renames
+            the file to something you can search, like <code>auth0-login-error.png</code>.
+          </p>
+          <div class="cta-row">
+            <a class="btn btn-primary" id="hero-download" href="#download">
+              Download for Windows
+            </a>
+            <a class="btn btn-ghost" href="https://github.com/cvpfus/snipname" rel="noreferrer">
+              View source
+            </a>
+          </div>
+          <p class="proof" id="proof">
+            Latest Windows build · NSIS installer and MSI · free, MIT
+          </p>
+        </div>
+
+        <figure class="hero-visual reveal" aria-label="Before and after a rename">
+          <div class="shot before">
+            <div class="shot-bar">
+              <span></span><span></span><span></span>
+              <em>Pictures / Screenshots</em>
+            </div>
+            <ul>
+              <li>
+                <i class="file"></i>
+                <span>Screenshot 2026-10-09 153059.png</span>
+              </li>
+              <li>
+                <i class="file"></i>
+                <span>Screenshot 2026-10-12 091422.png</span>
+              </li>
+              <li>
+                <i class="file"></i>
+                <span>Screenshot 2026-10-18 221007.png</span>
+              </li>
+            </ul>
+          </div>
+          <div class="shot after">
+            <div class="shot-bar">
+              <span></span><span></span><span></span>
+              <em>After dry run</em>
+            </div>
+            <ul>
+              <li>
+                <i class="file named"></i>
+                <span>auth0-login-error.png</span>
+                <small>login form, red banner</small>
+              </li>
+              <li>
+                <i class="file named"></i>
+                <span>figma-export-dialog.png</span>
+                <small>export panel, 2x scale</small>
+              </li>
+              <li>
+                <i class="file named"></i>
+                <span>ollama-model-list.png</span>
+                <small>gemma3:4b listed</small>
+              </li>
+            </ul>
+          </div>
+        </figure>
+      </section>
+
+      <section class="tagline" aria-label="Core promise">
+        <p class="tagline-text" id="tagline">
+          <span>The image already has a name.</span>
+          <span>Gemma writes it down on your machine.</span>
+        </p>
+      </section>
+
+      <section class="benefits" id="benefits">
+        <div class="section-head reveal">
+          <h2>A folder you can search again</h2>
+          <p>Built for the pile of unnamed snips that collects after a week of debugging.</p>
+        </div>
+        <ul class="benefit-grid">
+          <li class="reveal">
+            <h3>Search by the screen, not the clock</h3>
+            <p>
+              <strong>Names describe the UI.</strong> An Auth0 error, a Figma export
+              dialog, a failing test become filenames you can type in Explorer.
+            </p>
+          </li>
+          <li class="reveal">
+            <h3>Nothing leaves the laptop</h3>
+            <p>
+              <strong>Gemma runs through Ollama.</strong> The image is read locally.
+              There is no account, no upload, and no API key.
+            </p>
+          </li>
+          <li class="reveal">
+            <h3>Preview before a single rename</h3>
+            <p>
+              <strong>Dry run shows the slug and a one line reason.</strong> Rename
+              only when the name looks right. Collisions get a numeric suffix.
+            </p>
+          </li>
+          <li class="reveal">
+            <h3>Catches the default Windows names</h3>
+            <p>
+              <strong>Scan looks for Screenshot, Screen Shot, and Cuplikan layar.</strong>
+              Point it at Pictures\Screenshots, or any folder you pick.
+            </p>
+          </li>
+        </ul>
+      </section>
+
+      <section class="steps" id="how">
+        <div class="section-head reveal">
+          <h2>Three steps, then the folder is searchable</h2>
+        </div>
+        <ol>
+          <li class="reveal">
+            <span>01</span>
+            <h3>Point it at Screenshots</h3>
+            <p>
+              On first launch Snipname opens
+              <code>%USERPROFILE%\Pictures\Screenshots</code>. Browse if your snips
+              live somewhere else.
+            </p>
+          </li>
+          <li class="reveal">
+            <span>02</span>
+            <h3>Check Ollama, pick Gemma</h3>
+            <p>
+              The app lists models already pulled. A vision Gemma such as
+              <code>gemma3:4b</code> is enough. If the list is empty, pull one and check again.
+            </p>
+          </li>
+          <li class="reveal">
+            <span>03</span>
+            <h3>Scan, dry run, rename</h3>
+            <p>
+              Scan finds unnamed png, jpg, and webp files. Dry run proposes a kebab case
+              stem. Rename writes the file when you say so.
+            </p>
+          </li>
+        </ol>
+      </section>
+
+      <section class="download" id="download">
+        <div class="download-card reveal">
+          <div>
+            <p class="eyebrow">Windows x64 · version 0.1.0</p>
+            <h2>Get the latest build</h2>
+            <p>
+              The button downloads the newest successful GitHub Actions artifact,
+              <code>snipname-windows</code>. Inside the zip: the NSIS setup, the MSI,
+              and the raw <code>snipname.exe</code>.
+            </p>
+            <p class="meta" id="build-meta">Looking up the latest artifact…</p>
+          </div>
+          <div class="download-actions">
+            <a class="btn btn-primary" id="download-btn" href="/download/snipname-windows.zip">
+              Download Windows zip
+            </a>
+            <a class="btn btn-ghost" id="run-link" href="https://github.com/cvpfus/snipname/actions/workflows/build-windows.yml">
+              See the build
+            </a>
+            <p class="fine" id="download-note">
+              Unsigned build, fine for a local install. You also need
+              <a href="https://ollama.com/" rel="noreferrer">Ollama</a>
+              and <code>ollama pull gemma3:4b</code>.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="faq" id="faq">
+        <div class="section-head reveal">
+          <h2>Questions</h2>
+        </div>
+        <div class="faq-list">
+          <details class="reveal">
+            <summary>Does the screenshot leave my computer?</summary>
+            <p>
+              No. Snipname calls Ollama on <code>127.0.0.1:11434</code> from the Rust
+              side of the app. Gemma reads the image locally. There is no cloud model
+              and no telemetry account.
+            </p>
+          </details>
+          <details class="reveal">
+            <summary>Which filenames does Scan pick up?</summary>
+            <p>
+              Files whose names start with <code>Screenshot</code>,
+              <code>Screen Shot</code>, or <code>Cuplikan layar</code>, with a png, jpg,
+              jpeg, or webp extension. Already named files are left alone.
+            </p>
+          </details>
+          <details class="reveal">
+            <summary>What does a generated name look like?</summary>
+            <p>
+              English kebab case, three to eight words, no date, no extension in the
+              stem. The model also returns a one sentence reason, shown under the
+              proposed name so you can reject a bad read.
+            </p>
+          </details>
+          <details class="reveal">
+            <summary>Can a rename overwrite a file I already have?</summary>
+            <p>
+              No. If <code>auth0-login-error.png</code> exists, the next one becomes
+              <code>auth0-login-error-2.png</code>, then 3, and so on.
+            </p>
+          </details>
+          <details class="reveal">
+            <summary>Why is the download a zip, not a single installer?</summary>
+            <p>
+              GitHub Actions stores the Windows bundle as one artifact. The zip holds
+              <code>snipname_0.1.0_x64-setup.exe</code> (NSIS), the MSI, and
+              <code>snipname.exe</code> if you want to run it without installing.
+            </p>
+          </details>
+          <details class="reveal">
+            <summary>Do I need a GitHub login to download?</summary>
+            <p>
+              No. The download button fetches the newest successful Actions artifact
+              and sends the zip directly. GitHub login is only needed if you open the
+              build log instead.
+            </p>
+          </details>
+          <details class="reveal">
+            <summary>Windows SmartScreen warns about the installer.</summary>
+            <p>
+              The build is unsigned on purpose for this demo. SmartScreen will flag an
+              unknown publisher. Install only if you trust this repository.
+            </p>
+          </details>
+          <details class="reveal">
+            <summary>Which model should I pull?</summary>
+            <p>
+              Any vision capable Gemma that Ollama lists. <code>gemma3:4b</code> is the
+              default the app suggests. Check Ollama in the app after the pull so the
+              model appears in the dropdown.
+            </p>
+          </details>
+        </div>
+      </section>
+
+      <section class="close">
+        <div class="reveal">
+          <h2>Stop scrolling a folder of timestamps</h2>
+          <p>Scan the pile, read the proposed names, rename the ones that fit.</p>
+          <a class="btn btn-primary" id="close-download" href="#download">Download for Windows</a>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="brand">
+        <img src="./icon-128.png" width="24" height="24" alt="" />
+        <span>Snipname</span>
+      </div>
+      <p>Local Gemma names for Windows screenshots. Built for DEV Hacktoberfest Week 3.</p>
+      <nav aria-label="Footer">
+        <a href="https://github.com/cvpfus/snipname">GitHub</a>
+        <a href="https://github.com/cvpfus/snipname/blob/main/README.md">README</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+    </footer>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
