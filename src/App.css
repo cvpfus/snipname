@@ -49,3 +49,11 @@ button.primary { background: #f0b429; color: #111; border-color: #f0b429; font-w
 .row { display: flex; gap: 0.5rem; }
 .row input { flex: 1; }
 .ok { margin: 0; font-size: 0.85rem; color: #81c995; }
+select {
+  padding: 0.55rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid #2a2f3a;
+  background: #0f1115;
+  color: inherit;
+}
+.models { color: #9aa0a6; }

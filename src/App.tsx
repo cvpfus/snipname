@@ -16,7 +16,9 @@ export default function App() {
   const [dir, setDir] = useState("");
   const [rows, setRows] = useState<Row[]>([]);
   const [busy, setBusy] = useState(false);
+  const [checking, setChecking] = useState(false);
   const [model, setModel] = useState("gemma3:4b");
+  const [models, setModels] = useState<string[]>([]);
   const [ollamaUrl, setOllamaUrl] = useState("http://127.0.0.1:11434");
   const [status, setStatus] = useState<string | null>(null);
   const [log, setLog] = useState<string | null>(null);
@@ -26,6 +28,11 @@ export default function App() {
       .then(setDir)
       .catch((e) => setLog(String(e)));
   }, []);
+
+  useEffect(() => {
+    void pingOllama();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ollamaUrl]);
 
   async function pickFolder() {
     const selected = await open({
@@ -38,17 +45,24 @@ export default function App() {
   }
 
   async function pingOllama() {
+    setChecking(true);
     setLog(null);
     try {
       const s = await invoke<OllamaStatus>("check_ollama", { ollamaUrl });
+      setModels(s.models);
       setStatus(s.message);
-      if (s.models.length && !s.models.some((m) => m.startsWith(model.split(":")[0]!))) {
-        setStatus(`${s.message} · tip: pull your model with ollama pull ${model}`);
+      if (s.models.length) {
+        if (!s.models.includes(model)) setModel(s.models[0]!);
+      } else if (s.ok) {
+        setStatus(`${s.message} · run: ollama pull gemma3:4b`);
       }
       if (!s.ok) setLog(s.message);
     } catch (e) {
+      setModels([]);
       setStatus(null);
       setLog(String(e));
+    } finally {
+      setChecking(false);
     }
   }
 
@@ -125,16 +139,40 @@ export default function App() {
         </label>
         <label>
           Ollama URL
-          <input value={ollamaUrl} onChange={(e) => setOllamaUrl(e.target.value)} />
+          <div className="row">
+            <input value={ollamaUrl} onChange={(e) => setOllamaUrl(e.target.value)} />
+            <button type="button" disabled={checking || busy} onClick={() => void pingOllama()}>
+              {checking ? "Checking…" : "Check Ollama"}
+            </button>
+          </div>
         </label>
         <label>
           Model
-          <input value={model} onChange={(e) => setModel(e.target.value)} />
+          {models.length > 0 ? (
+            <select value={model} onChange={(e) => setModel(e.target.value)}>
+              {models.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              value={model}
+              onChange={(e) => setModel(e.target.value)}
+              placeholder="gemma3:4b — pull a model, then Check Ollama"
+            />
+          )}
         </label>
+        {status && (
+          <p className={models.length ? "ok" : "err"}>
+            {status}
+            {models.length > 0 && (
+              <span className="models"> · {models.join(", ")}</span>
+            )}
+          </p>
+        )}
         <div className="actions">
-          <button disabled={busy} onClick={() => void pingOllama()}>
-            Check Ollama
-          </button>
           <button disabled={busy || !dir} onClick={() => void refresh()}>
             Scan
           </button>
@@ -149,7 +187,6 @@ export default function App() {
             Rename
           </button>
         </div>
-        {status && <p className="ok">{status}</p>}
       </section>
 
       {log && <p className="err">{log}</p>}
