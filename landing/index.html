@@ -3,26 +3,26 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Snipname — name Windows screenshots with local Gemma</title>
+    <title>Snipname — snip like Windows, named by local Gemma</title>
     <meta
       name="description"
-      content="Snipname watches your Screenshots folder and renames default Snipping Tool files into searchable slugs with Gemma 3, running locally through Ollama. Nothing leaves the laptop."
+      content="Snipname captures a rectangle, window, or full screen, copies it immediately, then renames the file in the background with Gemma 3 through Ollama. Nothing leaves the laptop."
     />
     <meta name="robots" content="index,follow" />
     <link rel="canonical" href="https://cvpfus.github.io/snipname/" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Snipname — name Windows screenshots with local Gemma" />
+    <meta property="og:title" content="Snipname — snip like Windows, named by local Gemma" />
     <meta
       property="og:description"
-      content="Turn Screenshot 2026-10-09 153059.png into auth0-login-error.png. Gemma runs on your machine."
+      content="Capture, copy, and save immediately. Gemma renames the file in the background, on your machine."
     />
     <meta property="og:url" content="https://cvpfus.github.io/snipname/" />
     <meta property="og:image" content="https://cvpfus.github.io/snipname/og.png" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Snipname — name Windows screenshots with local Gemma" />
+    <meta name="twitter:title" content="Snipname — snip like Windows, named by local Gemma" />
     <meta
       name="twitter:description"
-      content="Turn Screenshot 2026-10-09 153059.png into auth0-login-error.png. Gemma runs on your machine."
+      content="Capture, copy, and save immediately. Gemma renames the file in the background, on your machine."
     />
     <meta name="twitter:image" content="https://cvpfus.github.io/snipname/og.png" />
     <link rel="icon" href="./icon-128.png" type="image/png" />
@@ -41,7 +41,7 @@
         "applicationCategory": "UtilitiesApplication",
         "operatingSystem": "Windows",
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-        "description": "Renames Windows screenshots from what is on the image, using a local Gemma model through Ollama."
+        "description": "Captures a Windows snip, copies it immediately, then renames the file from what is on the image using a local Gemma model through Ollama."
       }
     </script>
   </head>
@@ -76,15 +76,16 @@
     <main id="main">
       <section class="hero">
         <div class="hero-copy reveal">
-          <p class="eyebrow">Windows desktop · Gemma 3 via Ollama</p>
+          <p class="eyebrow">Windows snip · Gemma 3 via Ollama</p>
           <h1>
-            Find the screenshot<br />
-            by what is on it
+            Snip now.<br />
+            The name arrives after.
           </h1>
           <p class="lede">
-            Snipping Tool saves files like <code>Screenshot 2026-10-09 153059.png</code>.
-            Snipname asks a local Gemma model what is on the image, then renames
-            the file to something you can search, like <code>auth0-login-error.png</code>.
+            Press New or Print Screen, drag a rectangle, and the image is copied
+            and saved immediately. A local Gemma model then renames
+            <code>Screenshot 2026-10-09 153059.png</code> to something you can
+            search, like <code>auth0-login-error.png</code>.
           </p>
           <div class="cta-row">
             <a class="btn btn-primary" id="hero-download" href="#download">
@@ -123,7 +124,7 @@
           <div class="shot after">
             <div class="shot-bar">
               <span></span><span></span><span></span>
-              <em>After dry run</em>
+              <em>After Gemma renames it</em>
             </div>
             <ul>
               <li>
@@ -148,15 +149,15 @@
 
       <section class="tagline" aria-label="Core promise">
         <p class="tagline-text" id="tagline">
-          <span>The image already has a name.</span>
-          <span>Gemma writes it down on your machine.</span>
+          <span>The snip is yours immediately.</span>
+          <span>Gemma names it while you take the next one.</span>
         </p>
       </section>
 
       <section class="benefits" id="benefits">
         <div class="section-head reveal">
-          <h2>A folder you can search again</h2>
-          <p>Built for the pile of unnamed snips that collects after a week of debugging.</p>
+          <h2>A snip you can find later</h2>
+          <p>Capture like Snipping Tool. Search the folder by what was on the screen.</p>
         </div>
         <ul class="benefit-grid">
           <li class="reveal">
@@ -174,17 +175,17 @@
             </p>
           </li>
           <li class="reveal">
-            <h3>Preview before a single rename</h3>
+            <h3>The next snip never waits</h3>
             <p>
-              <strong>Dry run shows the slug and a one line reason.</strong> Rename
-              only when the name looks right. Collisions get a numeric suffix.
+              <strong>Copy and save happen on release.</strong> Gemma renames that
+              file in the background, so Print Screen is free for the next capture.
             </p>
           </li>
           <li class="reveal">
-            <h3>Catches the default Windows names</h3>
+            <h3>Same overlay as Snipping Tool</h3>
             <p>
-              <strong>Scan looks for Screenshot, Screen Shot, and Cuplikan layar.</strong>
-              Point it at Pictures\Screenshots, or any folder you pick.
+              <strong>Rectangle, window, full screen, or freeform.</strong> Delay is
+              3, 5, or 10 seconds. Escape cancels. Older unnamed files can still be scanned.
             </p>
           </li>
         </ul>
@@ -192,32 +193,31 @@
 
       <section class="steps" id="how">
         <div class="section-head reveal">
-          <h2>Three steps, then the folder is searchable</h2>
+          <h2>Three steps, then you can snip again</h2>
         </div>
         <ol>
           <li class="reveal">
             <span>01</span>
-            <h3>Point it at Screenshots</h3>
+            <h3>New, or Print Screen</h3>
             <p>
-              On first launch Snipname opens
-              <code>%USERPROFILE%\Pictures\Screenshots</code>. Browse if your snips
-              live somewhere else.
+              Pick rectangle, window, full screen, or freeform. Add a 3, 5, or 10
+              second delay if the screen needs a moment to settle.
             </p>
           </li>
           <li class="reveal">
             <span>02</span>
-            <h3>Check Ollama, pick Gemma</h3>
+            <h3>Release, and it is saved</h3>
             <p>
-              The app lists models already pulled. A vision Gemma such as
-              <code>gemma3:4b</code> is enough. If the list is empty, pull one and check again.
+              The snip is copied to the clipboard and written to
+              <code>Pictures\Screenshots</code> at once. You do not wait for the model.
             </p>
           </li>
           <li class="reveal">
             <span>03</span>
-            <h3>Scan, dry run, rename</h3>
+            <h3>Gemma renames it after</h3>
             <p>
-              Scan finds unnamed png, jpg, and webp files. Dry run proposes a kebab case
-              stem. Rename writes the file when you say so.
+              A local vision model, <code>gemma3:4b</code> by default, replaces the
+              timestamp with a kebab case name. Scan still covers older unnamed files.
             </p>
           </li>
         </ol>
@@ -265,11 +265,11 @@
             </p>
           </details>
           <details class="reveal">
-            <summary>Which filenames does Scan pick up?</summary>
+            <summary>Does the next snip wait for Gemma?</summary>
             <p>
-              Files whose names start with <code>Screenshot</code>,
-              <code>Screen Shot</code>, or <code>Cuplikan layar</code>, with a png, jpg,
-              jpeg, or webp extension. Already named files are left alone.
+              No. Release copies the image and saves the file immediately. Gemma
+              renames that file in the background. If Print Screen is already taken
+              by another app, use New. The save still does not wait.
             </p>
           </details>
           <details class="reveal">
@@ -311,6 +311,15 @@
             </p>
           </details>
           <details class="reveal">
+            <summary>What if I already have a folder of timestamps?</summary>
+            <p>
+              Scan still finds png, jpg, and webp files whose names start with
+              <code>Screenshot</code>, <code>Screen Shot</code>, or
+              <code>Cuplikan layar</code>. Dry run shows the proposed name. Rename
+              writes it when you say so. Already named files are left alone.
+            </p>
+          </details>
+          <details class="reveal">
             <summary>Which model should I pull?</summary>
             <p>
               Any vision capable Gemma that Ollama lists. <code>gemma3:4b</code> is the
@@ -323,8 +332,8 @@
 
       <section class="close">
         <div class="reveal">
-          <h2>Stop scrolling a folder of timestamps</h2>
-          <p>Scan the pile, read the proposed names, rename the ones that fit.</p>
+          <h2>Snip, paste, and keep going</h2>
+          <p>The clipboard is ready on release. The searchable name shows up after.</p>
           <a class="btn btn-primary" id="close-download" href="#download">Download for Windows</a>
         </div>
       </section>
@@ -335,7 +344,7 @@
         <img src="./icon-128.png" width="24" height="24" alt="" />
         <span>Snipname</span>
       </div>
-      <p>Local Gemma names for Windows screenshots. Built for DEV Hacktoberfest Week 3.</p>
+      <p>Windows snips, named locally by Gemma. Built for DEV Hacktoberfest Week 3.</p>
       <nav aria-label="Footer">
         <a href="https://github.com/cvpfus/snipname">GitHub</a>
         <a href="https://github.com/cvpfus/snipname/blob/main/README.md">README</a>
